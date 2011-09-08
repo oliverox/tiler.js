@@ -1,7 +1,17 @@
-/***************************************************************
- #	jquery.tiler.js											   #
- #	lines up a tiled image in a grid for easy panning/zooming  #
- #	copyright (c) 2011, Oliver Oxenham						   #
- #	prerequisites: Backbone.js, jQuery 						   #
- ***************************************************************/
- 
+jquery.tiler.js
+
+<b>OVERVIEW</b>
+
+jQuery plugin used to allow panning and zooming of a relatively large image stitched together dynamically from smaller tiles.
+
+
+PREREQUISITE LIBRARIES
+
+backbone.js (latest)
+jquery.js   (latest)
+
+CREATED BY
+
+Oliver Oxenham
+oliver@fanvenues.com
+
