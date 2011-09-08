@@ -269,8 +269,8 @@
 				topPos : this.model.get('top')
 			});
 
-			// trigger panofv move event
-			$panofv.trigger('panofvOnMove');		// external bind event to be implemented by customer
+			// trigger tiler move event
+			$tiler.trigger('tilerOnMove');		// external bind event to be implemented by customer
 		},
 		updateSize : function () {
 			$(this.el).css({
@@ -357,7 +357,7 @@
 	var MAX_ZOOMLEVEL = 4;
 	var mapView;
 	var opts;
-	var $panofv;
+	var $tiler;
 
 	var	constructTileImageUrl = function (tile, zoomlevel) {
 			if (opts.mapId) {
@@ -372,14 +372,14 @@
 	};
 
 
-	$.fn.panofv = function(options) {
+	$.fn.tiler = function(options) {
 		// build main options before element iteration
 		opts = $.extend({}, options);
 		TILES_BASE_URL = TILES_BASE_URL + opts.mapId + '/';
 
 		return this.each(function() {	// iterate and reformat each matched element
 			var $this = $(this);
-			$panofv = $this;
+			$tiler = $this;
 
 			// create the map view and map model
 			mapView = new MapView({
@@ -491,31 +491,31 @@
 	// public functions
 	//
 
-	$.fn.panofv.getTileSize = function () {
+	$.fn.tiler.getTileSize = function () {
 		return TILE_SIZE;
 	};
 
-	$.fn.panofv.getZoom = function () {
+	$.fn.tiler.getZoom = function () {
 		return mapView.model.get('zoomlevel');
 	};
 
-	$.fn.panofv.getLeft = function () {
+	$.fn.tiler.getLeft = function () {
 		return mapView.model.get('leftPos');	
 	};
 
-	$.fn.panofv.getTop = function () {
+	$.fn.tiler.getTop = function () {
 		return mapView.model.get('topPos');	
 	};
 
-	$.fn.panofv.center = function () {
+	$.fn.tiler.center = function () {
 		mapView.trigger('center');
 	};
 
-	$.fn.panofv.zoomIn = function () {
+	$.fn.tiler.zoomIn = function () {
 		mapView.trigger('zoomIn');
 	};
 
-	$.fn.panofv.zoomOut = function () {
+	$.fn.tiler.zoomOut = function () {
 		mapView.trigger('zoomOut');
 	};
 
