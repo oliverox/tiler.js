@@ -1,17 +1,16 @@
-jquery.tiler.js
+ Fanvenues 3D Interactive Seating Maps <http://www.fanvenues.com>
+ Copyright (c) 2010 Peekspy Pte Ltd <http://www.peekspy.com>
 
-<b>OVERVIEW</b>
+ Plugin: jquery.tiler.js
 
-jQuery plugin used to allow panning and zooming of a relatively large image stitched together dynamically from smaller tiles.
+ Description: lines up a tiled image in a grid for easy panning/zooming.
 
+ Prerequisite libraries: Backbone.js, jQuery.js
 
-PREREQUISITE LIBRARIES
+ Author: Oliver Oxenham
 
-backbone.js (latest)
-jquery.js   (latest)
+ Date created: 2011-09-11
+ Date updated: 2011-09-11
 
-CREATED BY
-
-Oliver Oxenham
-oliver@fanvenues.com
-
+ Latest version: 1.0.0
+ 1.0.0 : tiler.js created on Git.

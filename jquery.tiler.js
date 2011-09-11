@@ -1,10 +1,15 @@
-/***************************************************************
- #	jquery.tiler.js											   #
- #	lines up a tiled image in a grid for easy panning/zooming  #
- #	copyright (c) 2011, Oliver Oxenham						   #
- #	prerequisites: Backbone.js, jQuery 						   #
- ***************************************************************/
- 
+ /**********************************************************************************************************
+ Fanvenues 3D Interactive Seating Maps <http://www.fanvenues.com>
+ Copyright (c) 2010 Peekspy Pte Ltd <http://www.peekspy.com>
+ Plugin: jquery.tiler.js
+ Description: lines up a tiled image in a grid for easy panning/zooming.
+ Prerequisite libraries: Backbone.js, jQuery.js
+ Author: Oliver Oxenham
+ Date created: 2011-09-11
+ Date updated: 2011-09-11
+ Latest version: 1.0.0
+ 1.0.0 : tiler.js created on Git.
+***********************************************************************************************************/
 (function($){
 
 	var Map = Backbone.Model.extend({
