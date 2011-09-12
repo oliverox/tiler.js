@@ -1,0 +1,23 @@
+.mousedown{
+ 	cursor:move;
+}
+
+.tiler {		/* also known as viewarea */
+	width: 600px;
+	height: 600px;
+	position: relative;
+	overflow: hidden;
+	background-color: grey;	
+	z-index: 20;
+}
+.tiler .canvas {
+	position: relative;
+	overflow: hidden;
+	z-index: 10;
+}
+.tiler .tile {
+	position: relative;
+	float: left;
+	background-color: white;
+	z-index: 5;
+}

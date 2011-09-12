@@ -1,0 +1,24 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>Tiler.js Demo</title>
+	<link rel="stylesheet" href="css/tiler.css" type="text/css" />
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.1.7/underscore-min.js"></script>
+	<script src="js/backbone.js"></script>
+	<script type="text/javascript" src="../source/jquery.tiler.js"></script>
+	<script>
+		$(document).ready(function() {
+			$('#map').tiler({});
+		});
+	</script>
+</head>
+<body>
+<div id="map" class="tiler"></div>
+<div>
+<span><a href="#" onclick="$('#map').tiler.zoomIn();">zoomIn</a></span> | <span><a href="#" onclick="$('#map').tiler.zoomOut();">zoomOut</a></span>
+</div>
+</body>
+</html>
