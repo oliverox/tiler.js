@@ -1,6 +1,6 @@
  /**********************************************************************************************************
- Fanvenues 3D Interactive Seating Maps <http://www.fanvenues.com>
  Copyright (c) 2010 Peekspy Pte Ltd <http://www.peekspy.com>
+ Used by Fanvenues 3D Interactive Seating Maps <http://www.fanvenues.com>
  Plugin: jquery.tiler.js
  Description: lines up a tiled image in a grid for easy panning/zooming.
  Prerequisite libraries: Backbone.js, jQuery.js
@@ -12,18 +12,22 @@
 ***********************************************************************************************************/
 (function($){
 
-	var Map = Backbone.Model.extend({
+	var Pic = Backbone.Model.extend({
 		defaults: {
-			width: 500,
-			height: 500	
+			width : 500,
+			height: 500,
+			mouseWheelDelta: { x : 0, y : 0 },
+			mouseOrigCoord : { x : 0, y : 0 },
+			mouseMoveCoord : { x : 0, y : 0 },
+			mousepressed: false
 		},
 		initialize: function () {
 			_.bindAll(this);
-			// console.log('creating new map:', this.get('width'), this.get('height'));
+			console.log('creating new pic:', this.get('width'), this.get('height'));
 		}
 	});
 
-	var MapView = Backbone.View.extend({
+	var PicView = Backbone.View.extend({
 		events: {
 			"mouseover"  : "handlemouseover",
 			"mousedown"  : "handlemousedown",
@@ -36,14 +40,12 @@
 		initialize: function () {
 			_.bindAll(this);
 			// based on current width and height,
+			//console.log('this.el=', $(this.el));
 			var w = $(this.el).width();
 			var h = $(this.el).height(); 
-
-			this.model = new Map({
-				mouseWheelDelta: { x : 0, y : 0 },
-				mouseOrigCoord : { x : 0, y : 0 },
-				mouseMoveCoord : { x : 0, y : 0 },
-				mousepressed: false
+			this.model = new Pic({
+				width: w,
+				height: h
 			});
 		},
 		handletouchstart : function (e) {
@@ -150,7 +152,10 @@
 	var Tiles = Backbone.Collection.extend({
 		model: Tile,
 		rows: 1,
-		cols: 1
+		cols: 1,
+		renderTilesInView: function (left, top, zoomlevel) {
+			
+		}
 	});
 
 	var Tile = Backbone.Model.extend({
@@ -159,23 +164,20 @@
 			inViewport 	: false,
 			row 		: 0,
 			col 		: 0,
-			width 		: TILE_SIZE,
-			height 		: TILE_SIZE
+			width 		: 256,
+			height 		: 256
 		},
 		initialize: function () {
-			this.view = new TileView({
-				model: this
-			});
+			this.view = new TileView({ model: this });
 			this.bind("change:imgUrl", this.view.render);
 			this.bind("clear", function () {
-				// console.log('<<<<<< clearing tile #',this.get('id'));
-				this.set({ imgUrl : BLANK_IMAGE_URL });
+				console.log('<<<<<< clearing tile #',this.get('id'));
+				this.set({ imgUrl : opts.blank_image_url });
 			});
 
 		},
-
 		setImageUrlForZoom : function (zoomlevel) {
-			// console.log('setting image for tile', this.get('id'), 'with zoomlevel:', zoomlevel);
+			console.log('setting image for tile', this.get('id'), 'with zoomlevel:', zoomlevel);
 			this.set({ imgUrl : constructTileImageUrl(this, zoomlevel) });
 		}
 	});
@@ -188,27 +190,25 @@
 		initialize : function () {
 			_.bindAll(this);
 			$(this.el).css({
-				width : TILE_SIZE,
-				height: TILE_SIZE
+				width : opts.tile_size,
+				height: opts.tile_size
 			});
 		},
 		render : function () {
-			// console.log('rendering tile', this.model);
+			console.log('rendering tile', this.model);
 			var $this = $(this.el);
 			var imgEl;
 			var img = $this.find('img');
-			if (opts.mapId) {
-				if (img.length > 0) {
-					imgEl = img;
-				}
-				else {
-					imgEl = $('<img/>');
-					$this.append(imgEl);
-				}
-				imgEl.attr({
-					src    : this.model.get('imgUrl')
-				});
+			if (img.length > 0) {	// reuse img element
+				imgEl = img;
 			}
+			else {
+				imgEl = $('<img/>');
+				$this.append(imgEl);
+			}
+			imgEl.attr({
+				src    : this.model.get('imgUrl')
+			});
 			img = null;
 			imgEl = null;
 			return this;
@@ -216,7 +216,7 @@
 	});
 
 	// a canvas is simply a Tile container
-	// canvas size depends on current zoom level (== size of map at this zoom level)
+	// canvas size depends on current zoom level (== size of pic at this zoom level)
 	// canvas size = current tilesize * 2 ^ (zoomlevel - 1) 
 	var Canvas = Backbone.Model.extend({
 		defaults: {
@@ -226,27 +226,26 @@
 		},
 		initialize: function () {
 			_.bindAll(this);
-			// console.log('creating new canvas with:', 'w=', this.get('width'), 'h=', this.get('height'),'z=', this.get('zoomlevel'));
+			console.log('creating new canvas with:', 'w=', this.get('width'), 'h=', this.get('height'),'z=', this.get('zoomlevel'));
 		},
 		center: function () {
-			var l = (this.get('mapWidth') - this.get('width')) / 2; 		// for centering map in canvas
-			var t = (this.get('mapHeight') - this.get('height')) / 2;		// for centering map in canvas
+			var l = (this.get('picwidth') - this.get('width')) / 2; 		// for centering pic in canvas
+			var t = (this.get('picheight') - this.get('height')) / 2;		// for centering pic in canvas
 			this.set({left: l, top: t});
 		},
 		zoomIn : function () {
-			// console.log('zooming in canvas');
-			if (this.get('zoomlevel') < 5) {
+			if (this.get('zoomlevel') < opts.max_zoomlevel) {
 				this.set({ zoomlevel: this.get('zoomlevel') + 1 });
-				mapView.model.set({ zoomlevel: this.get('zoomlevel') });
+				picView.model.set({ zoomlevel: this.get('zoomlevel') });
 			}
 			else
 				alert('cannot zoom in further');
 		},
 		zoomOut : function () {
-			// console.log('zooming out canvas');
+			console.log('zooming out canvas');
 			if (this.get('zoomlevel') > 1) {
 				this.set({zoomlevel: this.get('zoomlevel') - 1});
-				mapView.model.set({ zoomlevel: this.get('zoomlevel') });
+				picView.model.set({ zoomlevel: this.get('zoomlevel') });
 			}
 			else
 				alert('cannot zoom out further');
@@ -268,12 +267,14 @@
 				"left" : this.model.get('left'),
 				"top" : this.model.get('top')
 			});
-			// also update mapView
-			mapView.model.set({
+			// render tiles in view
+			this.tiles.renderTilesInView();
+
+			// also update picView
+			picView.model.set({
 				leftPos: this.model.get('left'),
 				topPos : this.model.get('top')
 			});
-
 			// trigger tiler move event
 			$tiler.trigger('tilerOnMove');		// external bind event to be implemented by customer
 		},
@@ -287,13 +288,13 @@
 			var zoomlevel = this.model.get('zoomlevel');
 			var ow = this.model.get('width');	// original width and height used for repositioning
 			var oh = this.model.get('width');	// original width and height used for repositioning
-			var cw = TILE_SIZE * Math.pow(2, zoomlevel - 1);	// canvas is always a square
-			var ch = TILE_SIZE * Math.pow(2, zoomlevel - 1);	// canvas is always a square
-			// console.log('setting canvas size to:', cw, ch);
+			var cw = opts.tile_size * Math.pow(2, zoomlevel - 1);	// canvas is always a square
+			var ch = opts.tile_size * Math.pow(2, zoomlevel - 1);	// canvas is always a square
+			console.log('setting canvas size to:', cw, ch);
 			this.model.set({ width: cw, height: ch });
 
 			// clear all excess tiles
-			var totalTilesRequired = Math.pow(cw / TILE_SIZE, 2);
+			var totalTilesRequired = Math.pow(cw / opts.tile_size, 2);
 			/*
 			while (this.tiles.models.length > totalTilesRequired) {
 				// this.tiles.remove(this.tiles.models[this.tiles.models.length-1]);
@@ -304,8 +305,8 @@
 				this.tiles.models[t-1].trigger('clear');
 				t = t - 1;
 			}
-			this.tiles.rows = this.model.get('width') / TILE_SIZE;
-			this.tiles.cols = this.model.get('height') / TILE_SIZE;
+			this.tiles.rows = this.model.get('width') / opts.tile_size;
+			this.tiles.cols = this.model.get('height') / opts.tile_size;
 
 			// update tiles
 			var count = 1;
@@ -318,8 +319,14 @@
 						tile.set({ imgUrl : constructTileImageUrl(tile, zoomlevel) });					
 					}
 					else {
-						// console.log('creating new tile #', count);
-						tile = new Tile({ id: count, col: i, row: j });
+						console.log('creating new tile #', count);
+						tile = new Tile({ 
+							id: count, 
+							col: i, 
+							row: j,
+							width: opts.tile_size,
+							height: opts.tile_size 
+						});
 						tile.setImageUrlForZoom(zoomlevel);
 						this.tiles.add(tile);						
 					}
@@ -342,7 +349,7 @@
 			 });
 		},
 		render : function () {
-			// console.log('rendering canvasView');
+			console.log('rendering canvasView');
 			var $this = $(this.el);
 			$this.css({
 				'width' : this.model.get('width'),
@@ -350,70 +357,64 @@
 				'left'  : this.model.get('left'),
 				'top'	: this.model.get('top') 
 			});
+			console.log('canvas w,h=', this.model.get('width'), this.model.get('height'));
 			return this;
 		}
 	});
 
 
 	/* Private variables */
-	var TILE_SIZE = 256;
-	var TILES_BASE_URL = 'img/';
-	var BLANK_IMAGE_URL = 'img/blank.png';
-	var MAX_ZOOMLEVEL = 4;
-	var mapView;
+	var picView;
 	var opts;
 	var $tiler;
 
 	var	constructTileImageUrl = function (tile, zoomlevel) {
-			if (opts.mapId) {
-				var r = ("000" + (tile.get('row') - 1)).match(/...$/)[0];
-				var c = ("000" + (tile.get('col') - 1)).match(/...$/)[0];
-				var z = ("000" + (MAX_ZOOMLEVEL - zoomlevel)).match(/...$/)[0];
-				return [TILES_BASE_URL, 'tile_', z, '_', r, '_', c, '.jpg'].join('');
-			}
-			else {
-				return BLANK_IMAGE_URL;
-			}
+		var r = ("000" + (tile.get('row') - 1)).match(/...$/)[0];
+		var c = ("000" + (tile.get('col') - 1)).match(/...$/)[0];
+		var z = ("000" + (opts.max_zoomlevel - zoomlevel)).match(/...$/)[0];
+		return [opts.tiles_base_url, 'tile_', z, '_', r, '_', c, '.jpg'].join('');
 	};
 
 
 	$.fn.tiler = function(options) {
 		// build main options before element iteration
-		opts = $.extend({}, options);
-		TILES_BASE_URL = TILES_BASE_URL + opts.mapId + '/';
+		opts = $.extend({
+			tiles_base_url 	: 'tiles/',
+			tile_size 		: 256,
+			blank_image_url : 'img/blank.gif',
+			max_zoomlevel 	: 4
+		}, options);
 
 		return this.each(function() {	// iterate and reformat each matched element
 			var $this = $(this);
 			$tiler = $this;
 
-			// create the map view and map model
-			mapView = new MapView({
-				el: $this
-			});
+			// create the pic view and pic model
+			picView = new PicView({ el: $this });
 
 			// create the canvas view and canvas model
 			// calculate optimum zoom level for current w and h
 			var w = $this.width();
 			var h = $this.height();
-			var z = Math.floor(Math.log(2 * Math.min(w, h) / TILE_SIZE) / Math.log(2));
+			var z = Math.floor(Math.log(2 * Math.min(w, h) / opts.tile_size) / Math.log(2));
 			(z == 0) ? z = 1 : z;
 			//z = 2; 	// force default zoom level
-			var cw = TILE_SIZE * Math.pow(2, z - 1);	// canvas is always a square
-			var ch = TILE_SIZE * Math.pow(2, z - 1);	// canvas is always a square
-			var l = (w - cw) / 2; 		// for centering map in canvas
-			var t = (h - ch) / 2;		// for centering map in canvas
+			var cw = opts.tile_size * Math.pow(2, z - 1);	// canvas is always a square
+			var ch = opts.tile_size * Math.pow(2, z - 1);	// canvas is always a square
+			var l = (w - cw) / 2; 		// for centering pic in canvas
+			var t = (h - ch) / 2;		// for centering pic in canvas
 			var canvas = new Canvas({
 				zoomlevel : z,
 				width: cw,
 				height: ch,
-				mapWidth: w,
-				mapHeight: h,
+				picwidth: w,
+				picheight: h,
 				left: l,
 				top: t
 			});
 
 			// set the following for interaction with fanvenues plugin
-			mapView.model.set({ 
+			picView.model.set({ 
 				zoomlevel: z,
 				leftPos: l,
 				topPos: t
@@ -424,12 +425,12 @@
 			});
 
 			canvasView.tiles = new Tiles();
-			canvasView.tiles.baseUrl = TILES_BASE_URL;
-			canvasView.tiles.rows = canvas.get('width') / TILE_SIZE;
-			canvasView.tiles.cols = canvas.get('height') / TILE_SIZE;
+			canvasView.tiles.baseUrl = opts.tiles_base_url;
+			canvasView.tiles.rows = canvas.get('width') / opts.tile_size;
+			canvasView.tiles.cols = canvas.get('height') / opts.tile_size;
 
 			canvasView.tiles.bind("add", function (tile) {
-				// console.log('adding tile #', tile.get('id'));
+				console.log('adding tile #', tile.get('id'));
 				$(canvasView.el).append($(tile.view.el));
 			});
 			/*
@@ -445,16 +446,24 @@
 
 			// create tiles
 			var count = 1;
-			// console.log('cols,rows=',canvasView.tiles.cols,canvasView.tiles.rows);
+			console.log('cols,rows=',canvasView.tiles.cols,canvasView.tiles.rows);
+			canvasView.tiles.renderTilesInView();
+
 			for (var i=1; i<=canvasView.tiles.cols; i++) {
 				for (var j=1; j<=canvasView.tiles.rows; j++) {
 					if (tile = canvasView.tiles.get(count)) {
 						tile.set({ row: j, col: i });
-						tile.trigger('update'); // update tile's image element
+						//tile.trigger('update'); // update tile's image element
 					}
 					else {
-						// console.log('creating new tile #', count);
-						var tile = new Tile({ id: count, col: i, row: j });
+						console.log('creating new tile #', count);
+						var tile = new Tile({ 
+							id: count, 
+							col: i, 
+							row: j,
+							width: opts.tile_size,
+							height: opts.tile_size
+						 });
 						tile.setImageUrlForZoom(canvas.get('zoomlevel'));
 						canvasView.tiles.add(tile);						
 					}
@@ -469,24 +478,24 @@
 				.bind("change:height", canvasView.updateSize)
 				.bind("change:zoomlevel", canvasView.reposition);
 
-			mapView
+			picView
 				.bind('zoomIn', canvas.zoomIn)
 				.bind('zoomOut', canvas.zoomOut)
 				.bind('center', canvas.center);
 				
-			mapView.model.bind("change:mouseMoveCoord", function () {
-				var l = canvas.get('left') + mapView.model.get('mouseMoveCoord').x - mapView.model.get('mouseOrigCoord').x;
-				var t = canvas.get('top') + mapView.model.get('mouseMoveCoord').y - mapView.model.get('mouseOrigCoord').y;		
+			picView.model.bind("change:mouseMoveCoord", function () {
+				var l = canvas.get('left') + picView.model.get('mouseMoveCoord').x - picView.model.get('mouseOrigCoord').x;
+				var t = canvas.get('top') + picView.model.get('mouseMoveCoord').y - picView.model.get('mouseOrigCoord').y;		
 				canvas.set({ left : l, top : t });
 			});
-			mapView.model.bind("change:mouseWheelDelta", function () {
-				var l = canvas.get('left') + mapView.model.get('mouseWheelDelta').x;
-				var t = canvas.get('top') + mapView.model.get('mouseWheelDelta').y;
+			picView.model.bind("change:mouseWheelDelta", function () {
+				var l = canvas.get('left') + picView.model.get('mouseWheelDelta').x;
+				var t = canvas.get('top') + picView.model.get('mouseWheelDelta').y;
 				canvas.set({ left : l, top : t });
 			});
 
 			var $canvasViewEl = $(canvasView.render().el);
-			$(mapView.el).append($canvasViewEl);
+			$(picView.el).append($canvasViewEl);
 		});
 	};
 
@@ -497,32 +506,31 @@
 	//
 
 	$.fn.tiler.getTileSize = function () {
-		return TILE_SIZE;
+		return opts.tile_size;
 	};
 
 	$.fn.tiler.getZoom = function () {
-		return mapView.model.get('zoomlevel');
+		return picView.model.get('zoomlevel');
 	};
 
 	$.fn.tiler.getLeft = function () {
-		return mapView.model.get('leftPos');	
+		return picView.model.get('leftPos');	
 	};
 
 	$.fn.tiler.getTop = function () {
-		return mapView.model.get('topPos');	
+		return picView.model.get('topPos');	
 	};
 
 	$.fn.tiler.center = function () {
-		mapView.trigger('center');
+		picView.trigger('center');
 	};
 
 	$.fn.tiler.zoomIn = function () {
-		mapView.trigger('zoomIn');
+		picView.trigger('zoomIn');
 	};
 
 	$.fn.tiler.zoomOut = function () {
-		mapView.trigger('zoomOut');
+		picView.trigger('zoomOut');
 	};
 
 })(jQuery);
-
